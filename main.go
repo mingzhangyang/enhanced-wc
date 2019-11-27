@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
+	"fast-wc/parallel"
 	"fmt"
 	"log"
 	"os"
-	"fast-wc/parallel"
 )
 
 func main() {
@@ -29,6 +29,8 @@ func main() {
 		case "-w", "--words":
 			res = parallel.ReadLine(CollectInput())
 			fmt.Println(res.Counter.TotalWords)
+		case "-h", "--help":
+			printHelpInfo()
 		default:
 			res, err = parallel.Wc(os.Args[1])
 			if err != nil {
@@ -71,16 +73,17 @@ func main() {
 }
 
 func printHelpInfo() {
-	fmt.Println("Fast wc: an alternative to wc utility")
+	fmt.Println("fast-wc: an alternative to wc utility")
 	fmt.Println("")
 	fmt.Println("Synopsis: ")
-	fmt.Println("\tfwc [OPTION] FILE")
-	fmt.Println("\t... | wc [OPTION]")
+	fmt.Println("\tfast-wc [OPTION] FILE")
+	fmt.Println("\t... | fast-wc [OPTION]")
 	fmt.Println("")
 	fmt.Println("Options:")
-	fmt.Println("\t -c, --bytes, print the byte count")
-	fmt.Println("\t -w, --words, print the word counts")
-	fmt.Println("\t -l, --lines, print the line counts")
+	fmt.Println("\t -c, --bytes,\tprint the byte count")
+	fmt.Println("\t -w, --words,\tprint the word counts")
+	fmt.Println("\t -l, --lines,\tprint the line counts")
+	fmt.Println("\t -h, --help, \tprint the help information")
 }
 
 func CollectInput() <-chan []byte {
@@ -97,4 +100,3 @@ func CollectInput() <-chan []byte {
 	}()
 	return input
 }
-
