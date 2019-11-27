@@ -3,6 +3,7 @@ An word counter utility implemented with Golang
 
 ### Usage
 fast-wc [OPTION] FILE
+
 cat FILE | fast-wc
 
 **OPTION**:
