@@ -18,12 +18,17 @@ type Remainder struct {
 }
 
 type Counter struct {
-	totalBytes, totalLines, totalWords int64
+	TotalBytes, TotalLines, TotalWords int64
 }
 
 type Result struct {
 	Count  Counter
 	Remain Remainder
+}
+
+type Foo struct {
+	FileName string
+	Counter Counter
 }
 
 func findFirstAndLastNewlineChar(buf []byte) (int, int) {
@@ -98,8 +103,8 @@ Loop:
 				panic(err)
 			}
 		}
-		result.Count.totalBytes += int64(n)
-		result.Count.totalLines += int64(bytes.Count(buf[:n], NewLineChar))
+		result.Count.TotalBytes += int64(n)
+		result.Count.TotalLines += int64(bytes.Count(buf[:n], NewLineChar))
 
 		first, last = findFirstAndLastNewlineChar(buf[:n])
 
@@ -108,9 +113,9 @@ Loop:
 			result.Remain.Head = make([]byte, len(holder))
 			copy(result.Remain.Head, holder)
 		} else {
-			result.Count.totalWords += CountWords(holder)
+			result.Count.TotalWords += CountWords(holder)
 		}
-		result.Count.totalWords += CountWords(buf[first:last])
+		result.Count.TotalWords += CountWords(buf[first:last])
 
 		holder = holder[:0]
 		holder = append(holder, buf[last:n]...)
@@ -125,25 +130,30 @@ Loop:
 	res <- result
 }
 
-func Wc(fp string) {
+func Wc(fp string) (Foo, error){
 	info, err := os.Stat(fp)
 	if err != nil {
-		panic(err)
+		return Foo{}, err
 	}
 
+	// TB: total bytes of the file
 	var TB = info.Size()
-	var N = int64(runtime.NumCPU())
-	var Bl = N * BufferSize
+	var N, batchSize int64 = 1, TB
 
-	var rem = TB % Bl
-	var n = (TB + Bl - rem) / Bl
-	batchSize :=  n * BufferSize
+	if TB > BufferSize * BufferSize {
+		N = int64(runtime.NumCPU())
+		Bl := N * BufferSize
+		rem := TB % Bl
+		n := (TB + Bl - rem) / Bl
+		batchSize = n * BufferSize
+	}
+
 
 	res := make(chan Result, N)
 
 	var i int64 = 0
 	for ; i < N; i++ {
-		go parallelRead(fp, int64(i)*batchSize, int64(i+1)*batchSize, res)
+		go parallelRead(fp, i*batchSize, (i+1)*batchSize, res)
 	}
 
 	var m = make(map[int64]*Remainder)
@@ -151,9 +161,9 @@ func Wc(fp string) {
 
 	for i = 0; i < N; i++ {
 		r := <-res
-		tb += r.Count.totalBytes
-		tl += r.Count.totalLines
-		tw += r.Count.totalWords
+		tb += r.Count.TotalBytes
+		tl += r.Count.TotalLines
+		tw += r.Count.TotalWords
 
 		if _, ok := m[r.Remain.Range[0]]; !ok {
 			m[r.Remain.Range[0]] = &Remainder{}
@@ -173,5 +183,12 @@ func Wc(fp string) {
 		tw += CountWords(s)
 	}
 
-	println(tl, tw, tb, info.Name())
+	return Foo{
+		FileName: info.Name(),
+		Counter: Counter{
+			TotalWords: tw,
+			TotalLines: tl,
+			TotalBytes: tb,
+		},
+	}, nil
 }
