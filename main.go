@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fast-wc/parallel"
+	"github.com/mingzhangyang/fast-wc/parallel"
 	"fmt"
 	"log"
 	"os"
