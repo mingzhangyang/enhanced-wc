@@ -1,11 +1,12 @@
 package parallel
 
-func ReadLine(c <-chan []byte) Foo {
-	res := Foo{}
+// ReadLine read one line and count lines, bytes and words
+func ReadLine(c <-chan []byte) Summary {
+	res := Summary{}
 	for line := range c {
-		res.Counter.TotalLines += 1
+		res.Counter.TotalLines++
 		res.Counter.TotalBytes += int64(len(line) + 1)
-		res.Counter.TotalWords += CountWords(line)
+		res.Counter.TotalWords += countWords(line)
 	}
 	return res
 }

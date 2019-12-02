@@ -7,28 +7,34 @@ import (
 	"runtime"
 )
 
+// BufferSize is the default batch size for reading
 const BufferSize = 16 * 1024
 
+// NewLineChar is a new line char
 var NewLineChar = []byte{'\n'}
 
+// Remainder is the remainder content which is part of a whole line
 type Remainder struct {
 	Head  []byte
 	Tail  []byte
 	Range [2]int64
 }
 
+// Counter contains the counter information
 type Counter struct {
 	TotalBytes, TotalLines, TotalWords int64
 }
 
+// Result is the final statisics and remainder of a worker
 type Result struct {
 	Count  Counter
 	Remain Remainder
 }
 
-type Foo struct {
+// Summary is the final summary of the results of all workers
+type Summary struct {
 	FileName string
-	Counter Counter
+	Counter  Counter
 }
 
 func findFirstAndLastNewlineChar(buf []byte) (int, int) {
@@ -47,35 +53,6 @@ func findFirstAndLastNewlineChar(buf []byte) (int, int) {
 		}
 	}
 	return first, last
-}
-
-func CountWords(buf []byte) (count int64) {
-	var preIsSpace bool
-	var i int
-	Loop:
-	for ; i < len(buf); i++ {
-		switch buf[i] {
-		case ' ', '\n', '\t', '\r', '\v', '\f':
-			preIsSpace = true
-			break Loop
-		}
-	}
-	if i != 0 {
-		count++
-	}
-	i++
-	for ; i < len(buf); i++ {
-		switch buf[i] {
-		case ' ', '\n', '\t', '\r', '\v', '\f':
-			preIsSpace = true
-		default:
-			if preIsSpace {
-				count++
-				preIsSpace = false
-			}
-		}
-	}
-	return
 }
 
 func parallelRead(fp string, start, end int64, res chan Result) {
@@ -113,9 +90,9 @@ Loop:
 			result.Remain.Head = make([]byte, len(holder))
 			copy(result.Remain.Head, holder)
 		} else {
-			result.Count.TotalWords += CountWords(holder)
+			result.Count.TotalWords += countWords(holder)
 		}
-		result.Count.TotalWords += CountWords(buf[first:last])
+		result.Count.TotalWords += countWords(buf[first:last])
 
 		holder = holder[:0]
 		holder = append(holder, buf[last:n]...)
@@ -130,17 +107,18 @@ Loop:
 	res <- result
 }
 
-func Wc(fp string) (Foo, error){
+// Wc is exported function of word counting
+func Wc(fp string) (Summary, error) {
 	info, err := os.Stat(fp)
 	if err != nil {
-		return Foo{}, err
+		return Summary{}, err
 	}
 
 	// TB: total bytes of the file
 	var TB = info.Size()
 	var N, batchSize int64 = 1, TB
 
-	if TB > BufferSize * BufferSize {
+	if TB > BufferSize*BufferSize {
 		N = int64(runtime.NumCPU())
 		Bl := N * BufferSize
 		rem := TB % Bl
@@ -148,10 +126,9 @@ func Wc(fp string) (Foo, error){
 		batchSize = n * BufferSize
 	}
 
-
 	res := make(chan Result, N)
 
-	var i int64 = 0
+	var i int64
 	for ; i < N; i++ {
 		go parallelRead(fp, i*batchSize, (i+1)*batchSize, res)
 	}
@@ -177,13 +154,13 @@ func Wc(fp string) (Foo, error){
 
 	//println(len(m))
 	for _, v := range m {
-		s := make([]byte, 0, len(v.Head) + len(v.Tail))
+		s := make([]byte, 0, len(v.Head)+len(v.Tail))
 		s = append(s, v.Head...)
 		s = append(s, v.Tail...)
-		tw += CountWords(s)
+		tw += countWords(s)
 	}
 
-	return Foo{
+	return Summary{
 		FileName: info.Name(),
 		Counter: Counter{
 			TotalWords: tw,

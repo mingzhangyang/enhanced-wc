@@ -7,6 +7,10 @@ import (
 	"sync"
 )
 
+// The codes below are from https://ajeetdsouza.github.io/blog/posts/beating-c-with-70-lines-of-go/
+// it can be found at https://github.com/ajeetdsouza/blog-wc-go/blob/master/wc-mutex/main.go
+// It is used as a comparison to the real parallel version.
+
 func Wc(filePath string) {
 	file, err := os.Open(filePath)
 	if err != nil {

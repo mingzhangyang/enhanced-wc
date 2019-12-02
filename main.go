@@ -2,14 +2,14 @@ package main
 
 import (
 	"bufio"
-	"github.com/mingzhangyang/fast-wc/parallel"
 	"fmt"
+	"github.com/mingzhangyang/fast-wc/parallel"
 	"log"
 	"os"
 )
 
 func main() {
-	var res parallel.Foo
+	var res parallel.Summary
 	var err error
 	switch len(os.Args) {
 	case 1:
@@ -86,7 +86,7 @@ func printHelpInfo() {
 	fmt.Println("\t -h, --help, \tprint the help information")
 }
 
-func CollectInput() <-chan []byte {
+func collectInput() <-chan []byte {
 	var input = make(chan []byte, 16)
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
