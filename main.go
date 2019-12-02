@@ -13,7 +13,7 @@ func main() {
 	var err error
 	switch len(os.Args) {
 	case 1:
-		res = parallel.ReadLine(CollectInput())
+		res = parallel.ReadLine(collectInput())
 		fmt.Println("\t",
 			res.Counter.TotalLines,
 			"\t", res.Counter.TotalWords,
@@ -21,13 +21,13 @@ func main() {
 	case 2:
 		switch os.Args[1] {
 		case "-l", "--lines":
-			res = parallel.ReadLine(CollectInput())
+			res = parallel.ReadLine(collectInput())
 			fmt.Println(res.Counter.TotalLines)
 		case "-c", "--bytes":
-			res = parallel.ReadLine(CollectInput())
+			res = parallel.ReadLine(collectInput())
 			fmt.Println(res.Counter.TotalBytes)
 		case "-w", "--words":
-			res = parallel.ReadLine(CollectInput())
+			res = parallel.ReadLine(collectInput())
 			fmt.Println(res.Counter.TotalWords)
 		case "-h", "--help":
 			printHelpInfo()
